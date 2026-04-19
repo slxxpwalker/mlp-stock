@@ -129,54 +129,26 @@
                         </div>
                         <div>
                             <label class="block text-sm md:text-base font-medium text-slate-600 mb-1.5">ชื่อผู้เบิก</label>
-                            <!-- เอา readonly ออก เพื่อให้พิมพ์แก้ได้ -->
                             <input type="text" id="employeeName" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-700 text-sm md:text-base transition-all">
                         </div>
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-slate-600 mb-1.5">หมวดหมู่สินค้า</label>
-                            <select id="categorySelect" onchange="updateItemSelect()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base">
-                                <option value="">-- เลือกหมวดหมู่ --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-slate-600 mb-1.5">รายการสินค้า</label>
-                            <select id="itemSelect" disabled class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base disabled:bg-slate-200">
-                                <option value="">-- กรุณาเลือกหมวดหมู่ก่อน --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-slate-600 mb-1.5">จำนวนที่เบิก</label>
-                            <input type="number" id="withdrawQty" min="1" placeholder="ระบุจำนวน" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base">
-                        </div>
-                        <div>
-                            <label class="block text-sm md:text-base font-medium text-slate-600 mb-1.5">สถานที่นำไปใช้</label>
-                            <select id="locationSelect" onchange="toggleOtherLocation()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base">
-                                <option value="">-- เลือกสถานที่ --</option>
-                                <option value="H1">H1 (เล้า 1)</option>
-                                <option value="H2">H2 (เล้า 2)</option>
-                                <option value="H3">H3 (เล้า 3)</option>
-                                <option value="H4">H4 (เล้า 4)</option>
-                                <option value="H5">H5 (เล้า 5)</option>
-                                <option value="H6">H6 (เล้า 6)</option>
-                                <option value="H7">H7 (เล้า 7)</option>
-                                <option value="H8">H8 (เล้า 8)</option>
-                                <option value="H9">H9 (เล้า 9)</option>
-                                <option value="H10">H10 (เล้า 10)</option>
-                                <option value="H11">H11 (เล้า 11)</option>
-                                <option value="H12">H12 (เล้า 12)</option>
-                                <option value="อื่นๆ">อื่นๆ</option>
-                            </select>
-                        </div>
-                        <div id="otherLocationWrapper" class="hidden md:col-span-2">
-                            <label class="block text-sm md:text-base font-medium text-slate-600 mb-1.5 text-blue-600">โปรดระบุสถานที่อื่นๆ</label>
-                            <input type="text" id="otherLocationInput" placeholder="พิมพ์รายละเอียดสถานที่..." class="w-full p-3 bg-blue-50 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base">
-                        </div>
+                    </div>
 
-                        <div class="md:col-span-2 mt-4">
-                            <button id="submitBtn" onclick="processWithdrawal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 md:py-4 px-4 rounded-xl transition-colors shadow-md text-sm md:text-base flex justify-center items-center disabled:bg-slate-400">
-                                บันทึกการเบิกสินค้า
-                            </button>
-                        </div>
+                    <!-- รายการสินค้า (เพิ่มได้หลายรายการ) -->
+                    <div id="itemsContainer" class="mt-6 space-y-4">
+                        <!-- รายการแรกจะถูกสร้างโดย JS -->
+                    </div>
+
+                    <!-- ปุ่มเพิ่มรายการ -->
+                    <button type="button" onclick="addItemRow()" class="w-full mt-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-3 rounded-xl transition-colors text-sm md:text-base flex justify-center items-center gap-2 border-2 border-dashed border-emerald-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                        เพิ่มรายการ
+                    </button>
+
+                    <!-- ปุ่มบันทึก -->
+                    <div class="mt-6">
+                        <button id="submitBtn" onclick="processWithdrawal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 md:py-4 px-4 rounded-xl transition-colors shadow-md text-sm md:text-base flex justify-center items-center disabled:bg-slate-400">
+                            บันทึกการเบิกสินค้า
+                        </button>
                     </div>
                 </section>
             </div>
@@ -314,6 +286,7 @@
         let activeCategory = 'ทั้งหมด';
         let isDataLoaded = false; 
         let selectedLogForReturn = null;
+        let itemRowCounter = 0; // นับเลข row สำหรับ unique id
 
         // --- ฟังก์ชันอัปเดต UI โปรไฟล์ ---
         function updateProfileUI(user) {
@@ -482,13 +455,32 @@
             }
 
             filteredData.forEach((item) => {
-                const isLow = item.qty <= 10;
-                const cardBg = isLow ? "bg-red-50 border-red-200" : "bg-white border-slate-100 hover:border-emerald-200";
-                const titleColor = isLow ? "text-red-700" : "text-slate-800";
-                const qtyColor = isLow ? "text-red-600" : "text-emerald-600";
+                const isOut = item.qty <= 0;
+                
+                let cardBg, titleColor, qtyColor;
+                if (isOut) {
+                    cardBg = "bg-red-50 border-red-200 opacity-75";
+                    titleColor = "text-red-700";
+                    qtyColor = "text-red-600";
+                } else {
+                    cardBg = "bg-white border-slate-100 hover:border-emerald-200";
+                    titleColor = "text-slate-800";
+                    qtyColor = "text-emerald-600";
+                }
+                
+                const clickAction = isOut 
+                    ? `onclick="showToast('สินค้าหมดสต็อก', 'error')"` 
+                    : `onclick="quickWithdraw('${item.id}', '${item.category}')"`;
+                
+                const hoverHint = isOut
+                    ? `<div class="mt-2 w-full bg-red-100 text-red-600 text-xs font-semibold py-2 rounded-lg text-center">❌ หมดสต็อก</div>`
+                    : `<div class="mt-2 w-full bg-blue-50 text-blue-600 text-xs font-semibold py-2 rounded-lg text-center opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                            เบิกสินค้านี้
+                        </div>`;
                 
                 stockList.innerHTML += `
-                    <div class="p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between transition-all group ${cardBg} cursor-pointer relative" onclick="quickWithdraw('${item.id}', '${item.category}')" title="คลิกเพื่อทำรายการเบิก">
+                    <div class="p-4 md:p-5 rounded-2xl border shadow-sm flex flex-col justify-between transition-all group ${cardBg} ${isOut ? '' : 'cursor-pointer'} relative" ${clickAction} title="${isOut ? 'หมดสต็อก' : 'คลิกเพื่อทำรายการเบิก'}">
                         
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex-1 pr-3 overflow-hidden">
@@ -504,10 +496,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-2 w-full bg-blue-50 text-blue-600 text-xs font-semibold py-2 rounded-lg text-center opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-                            เบิกสินค้านี้
-                        </div>
+                        ${hoverHint}
                     </div>`;
             });
         }
@@ -515,86 +504,264 @@
         function quickWithdraw(itemId, category) {
             showView('withdraw');
             
-            document.getElementById('withdrawDate').value = new Date().toISOString().split('T')[0];
-            if(currentUser && document.getElementById('employeeName').value === "") {
-                document.getElementById('employeeName').value = currentUser.name;
-            }
-
-            const catSelect = document.getElementById('categorySelect');
-            catSelect.value = category;
+            // หาว่าเป็นรายการแรกในฟอร์มหรือเปล่า ถ้ายังว่างอยู่ใช้แทน
+            // ถ้ามีรายการที่กรอกอยู่แล้ว ให้เพิ่มแถวใหม่
+            const firstRow = document.querySelector('.item-row');
+            const firstCatSelect = firstRow ? firstRow.querySelector('.cat-select') : null;
+            const firstItemSelect = firstRow ? firstRow.querySelector('.item-select') : null;
             
-            updateItemSelect();
+            const isFirstEmpty = firstCatSelect && firstCatSelect.value === "" && firstItemSelect && firstItemSelect.value === "";
+            
+            const targetRow = isFirstEmpty ? firstRow : addItemRow();
+            
+            const catSel = targetRow.querySelector('.cat-select');
+            catSel.value = category;
+            updateItemSelectInRow(catSel);
             
             setTimeout(() => {
-                const itemSelect = document.getElementById('itemSelect');
-                itemSelect.value = itemId;
+                const itSel = targetRow.querySelector('.item-select');
+                itSel.value = itemId;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                document.getElementById("withdrawQty").focus();
+                targetRow.querySelector('.qty-input').focus();
             }, 50);
         }
 
-        // --- UI หน้าฟอร์มเบิกของ ---
+        // --- UI หน้าฟอร์มเบิกของ (รองรับหลายรายการ) ---
         function initWithdrawForm() {
             document.getElementById('withdrawDate').value = new Date().toISOString().split('T')[0];
-            // ถ้าชื่อผู้เบิกยังว่างอยู่ ให้ใส่ชื่อที่ล็อกอิน แต่ยอมให้ผู้ใช้แก้ได้
             if(currentUser && document.getElementById('employeeName').value === "") {
                 document.getElementById('employeeName').value = currentUser.name;
             }
-
-            const catSelect = document.getElementById('categorySelect');
-            catSelect.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
-            [...new Set(stockData.map(item => item.category))].forEach(cat => catSelect.innerHTML += `<option value="${cat}">${cat}</option>`);
             
-            document.getElementById('itemSelect').innerHTML = '<option value="">-- กรุณาเลือกหมวดหมู่ก่อน --</option>';
-            document.getElementById('itemSelect').disabled = true;
-            document.getElementById("withdrawQty").value = "";
-            document.getElementById("locationSelect").value = "";
-            document.getElementById("otherLocationWrapper").classList.add("hidden");
+            // เคลียร์รายการเดิม + สร้างรายการแรก
+            document.getElementById('itemsContainer').innerHTML = '';
+            itemRowCounter = 0;
+            addItemRow();
         }
 
-        function updateItemSelect() {
-            const cat = document.getElementById('categorySelect').value;
-            const itemSelect = document.getElementById('itemSelect');
+        function addItemRow() {
+            itemRowCounter++;
+            const rowId = itemRowCounter;
+            const container = document.getElementById('itemsContainer');
+            
+            // นับว่ามีกี่รายการแล้ว
+            const existingCount = container.querySelectorAll('.item-row').length;
+            const itemNumber = existingCount + 1;
+            
+            const categories = [...new Set(stockData.map(item => item.category))];
+            const catOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'item-row bg-slate-50 border border-slate-200 rounded-xl p-4';
+            rowDiv.dataset.rowId = rowId;
+            rowDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                        <span class="bg-blue-500 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs item-number">${itemNumber}</span>
+                        รายการที่ <span class="item-number-text">${itemNumber}</span>
+                    </span>
+                    <button type="button" onclick="removeItemRow(this)" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg remove-btn" title="ลบรายการนี้">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">หมวดหมู่</label>
+                        <select onchange="updateItemSelectInRow(this)" class="cat-select w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            <option value="">-- เลือกหมวดหมู่ --</option>
+                            ${catOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">รายการสินค้า</label>
+                        <select disabled class="item-select w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:bg-slate-200">
+                            <option value="">-- เลือกหมวดหมู่ก่อน --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">จำนวน</label>
+                        <input type="number" min="1" placeholder="ระบุจำนวน" class="qty-input w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">สถานที่นำไปใช้</label>
+                        <select onchange="toggleOtherLocationInRow(this)" class="loc-select w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                            <option value="">-- เลือกสถานที่ --</option>
+                            <option value="H1">H1 (เล้า 1)</option>
+                            <option value="H2">H2 (เล้า 2)</option>
+                            <option value="H3">H3 (เล้า 3)</option>
+                            <option value="H4">H4 (เล้า 4)</option>
+                            <option value="H5">H5 (เล้า 5)</option>
+                            <option value="H6">H6 (เล้า 6)</option>
+                            <option value="H7">H7 (เล้า 7)</option>
+                            <option value="H8">H8 (เล้า 8)</option>
+                            <option value="H9">H9 (เล้า 9)</option>
+                            <option value="H10">H10 (เล้า 10)</option>
+                            <option value="H11">H11 (เล้า 11)</option>
+                            <option value="H12">H12 (เล้า 12)</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div class="other-loc-wrapper hidden md:col-span-2">
+                        <label class="block text-xs font-medium text-blue-600 mb-1">โปรดระบุสถานที่อื่นๆ</label>
+                        <input type="text" placeholder="พิมพ์สถานที่..." class="other-loc-input w-full p-2.5 bg-blue-50 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">📝 หมายเหตุ <span class="text-slate-400 font-normal">(ไม่บังคับ)</span></label>
+                        <input type="text" placeholder="เพิ่มรายละเอียด เช่น ฉีดรอบบ่าย, ใช้กับไก่ป่วย..." class="note-input w-full p-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+            `;
+            container.appendChild(rowDiv);
+            
+            updateRowNumbers();
+            return rowDiv;
+        }
+
+        function removeItemRow(btn) {
+            const container = document.getElementById('itemsContainer');
+            const rows = container.querySelectorAll('.item-row');
+            
+            // ป้องกันลบหมด ต้องเหลืออย่างน้อย 1 รายการ
+            if (rows.length <= 1) {
+                showToast("ต้องมีรายการอย่างน้อย 1 รายการ", "error");
+                return;
+            }
+            
+            const row = btn.closest('.item-row');
+            row.remove();
+            updateRowNumbers();
+        }
+
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('.item-row');
+            rows.forEach((row, idx) => {
+                const num = idx + 1;
+                row.querySelector('.item-number').textContent = num;
+                row.querySelector('.item-number-text').textContent = num;
+                
+                // ถ้าเหลือรายการเดียว ซ่อนปุ่มลบ
+                const removeBtn = row.querySelector('.remove-btn');
+                if (rows.length === 1) {
+                    removeBtn.style.display = 'none';
+                } else {
+                    removeBtn.style.display = '';
+                }
+            });
+        }
+
+        function updateItemSelectInRow(catSelect) {
+            const row = catSelect.closest('.item-row');
+            const itemSelect = row.querySelector('.item-select');
+            const cat = catSelect.value;
+            
             itemSelect.innerHTML = '<option value="">-- เลือกรายการ --</option>';
-            if (cat === "") { itemSelect.disabled = true; return; }
-            stockData.filter(item => item.category === cat).forEach(item => itemSelect.innerHTML += `<option value="${item.id}">${item.name} (เหลือ ${item.qty} ${item.unit})</option>`);
+            if (cat === "") { 
+                itemSelect.disabled = true; 
+                return; 
+            }
+            stockData.filter(item => item.category === cat).forEach(item => {
+                itemSelect.innerHTML += `<option value="${item.id}">${item.name} (เหลือ ${item.qty} ${item.unit})</option>`;
+            });
             itemSelect.disabled = false;
         }
 
-        function toggleOtherLocation() {
-            const select = document.getElementById("locationSelect");
-            const otherWrapper = document.getElementById("otherLocationWrapper");
-            if (select.value === "อื่นๆ") { 
-                otherWrapper.classList.remove("hidden"); 
-                document.getElementById("otherLocationInput").focus(); 
-            } else { 
-                otherWrapper.classList.add("hidden"); 
-                document.getElementById("otherLocationInput").value = ""; 
+        function toggleOtherLocationInRow(locSelect) {
+            const row = locSelect.closest('.item-row');
+            const otherWrapper = row.querySelector('.other-loc-wrapper');
+            const otherInput = row.querySelector('.other-loc-input');
+            
+            if (locSelect.value === "อื่นๆ") {
+                otherWrapper.classList.remove('hidden');
+                otherInput.focus();
+            } else {
+                otherWrapper.classList.add('hidden');
+                otherInput.value = "";
             }
         }
 
         async function processWithdrawal() {
             if(!GOOGLE_SCRIPT_URL) { showToast("ตั้งค่า URL ก่อนครับ", "error"); return; }
 
-            const payload = {
-                action: "withdraw",
-                date: document.getElementById("withdrawDate").value,
-                user: document.getElementById("employeeName").value.trim(),
-                itemId: document.getElementById("itemSelect").value,
-                qty: parseInt(document.getElementById("withdrawQty").value),
-                location: document.getElementById("locationSelect").value === "อื่นๆ" ? document.getElementById("otherLocationInput").value.trim() : document.getElementById("locationSelect").value
-            };
-            const selectedItem = stockData.find(i => i.id === payload.itemId);
-
-            if (!payload.date || !payload.user || !payload.itemId || isNaN(payload.qty) || payload.qty <= 0 || !payload.location) { 
-                showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "error"); return; 
-            }
-            if (payload.qty > selectedItem.qty) { showToast("สต็อกไม่พอ!", "error"); return; }
+            const date = document.getElementById("withdrawDate").value;
+            const user = document.getElementById("employeeName").value.trim();
             
-            payload.itemName = selectedItem.name;
+            if (!date || !user) { 
+                showToast("กรอกวันที่และชื่อผู้เบิก", "error"); 
+                return; 
+            }
+
+            // เก็บข้อมูลทุก row
+            const rows = document.querySelectorAll('.item-row');
+            const items = [];
+            const errors = [];
+            
+            rows.forEach((row, idx) => {
+                const itemId = row.querySelector('.item-select').value;
+                const qty = parseInt(row.querySelector('.qty-input').value);
+                const locSelect = row.querySelector('.loc-select').value;
+                const otherLoc = row.querySelector('.other-loc-input').value.trim();
+                const location = locSelect === "อื่นๆ" ? otherLoc : locSelect;
+                const note = row.querySelector('.note-input').value.trim();
+                
+                if (!itemId || isNaN(qty) || qty <= 0 || !location) {
+                    errors.push(`รายการที่ ${idx + 1}: กรอกข้อมูลไม่ครบ`);
+                    return;
+                }
+                
+                const selectedItem = stockData.find(i => i.id === itemId);
+                if (!selectedItem) {
+                    errors.push(`รายการที่ ${idx + 1}: ไม่พบสินค้า`);
+                    return;
+                }
+                
+                if (qty > selectedItem.qty) {
+                    errors.push(`รายการที่ ${idx + 1}: "${selectedItem.name}" สต็อกไม่พอ (เหลือ ${selectedItem.qty})`);
+                    return;
+                }
+                
+                items.push({
+                    itemId: itemId,
+                    itemName: selectedItem.name,
+                    qty: qty,
+                    location: location,
+                    note: note
+                });
+            });
+            
+            if (errors.length > 0) {
+                showToast(errors[0], "error");
+                return;
+            }
+            
+            if (items.length === 0) {
+                showToast("ยังไม่มีรายการที่กรอกครบ", "error");
+                return;
+            }
+
+            // ตรวจซ้ำ: ถ้า itemId เดียวกันหลายรายการรวมกัน เกินสต็อกหรือเปล่า
+            const totalByItem = {};
+            for (const it of items) {
+                totalByItem[it.itemId] = (totalByItem[it.itemId] || 0) + it.qty;
+            }
+            for (const id in totalByItem) {
+                const stockItem = stockData.find(i => i.id === id);
+                if (stockItem && totalByItem[id] > stockItem.qty) {
+                    showToast(`"${stockItem.name}" รวมแล้วเกินสต็อก (มี ${stockItem.qty})`, "error");
+                    return;
+                }
+            }
+
+            const payload = {
+                action: "withdrawBatch",
+                date: date,
+                user: user,
+                items: items
+            };
 
             const submitBtn = document.getElementById("submitBtn");
-            submitBtn.disabled = true; submitBtn.innerHTML = '<div class="loader"></div> กำลังบันทึก...';
+            submitBtn.disabled = true; 
+            submitBtn.innerHTML = '<div class="loader"></div> กำลังบันทึก...';
 
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, { 
@@ -605,19 +772,22 @@
                 const result = await response.json();
                 
                 if(result.status === "success") {
-                    showToast("บันทึกเบิกสำเร็จ!");
-                    // เคลียร์ค่าบางส่วน
-                    document.getElementById("withdrawQty").value = "";
-                    document.getElementById("locationSelect").value = "";
-                    document.getElementById("otherLocationWrapper").classList.add("hidden");
-                    
+                    showToast(`✅ เบิก ${items.length} รายการสำเร็จ!`);
                     fetchDataFromSheet(); 
-                    setTimeout(() => { showView('stock'); submitBtn.disabled = false; submitBtn.innerHTML = 'บันทึกการเบิกสินค้า'; }, 1500);
+                    setTimeout(() => { 
+                        showView('stock'); 
+                        submitBtn.disabled = false; 
+                        submitBtn.innerHTML = 'บันทึกการเบิกสินค้า'; 
+                    }, 1500);
                 } else {
-                    showToast(`Error: ${result.message}`, "error"); submitBtn.disabled = false; submitBtn.innerHTML = 'บันทึกการเบิกสินค้า';
+                    showToast(`Error: ${result.message}`, "error"); 
+                    submitBtn.disabled = false; 
+                    submitBtn.innerHTML = 'บันทึกการเบิกสินค้า';
                 }
             } catch (e) {
-                showToast("เชื่อมต่อฐานข้อมูลล้มเหลว", "error"); submitBtn.disabled = false; submitBtn.innerHTML = 'บันทึกการเบิกสินค้า';
+                showToast("เชื่อมต่อฐานข้อมูลล้มเหลว", "error"); 
+                submitBtn.disabled = false; 
+                submitBtn.innerHTML = 'บันทึกการเบิกสินค้า';
                 console.error("Fetch Error Detail:", e);
             }
         }
