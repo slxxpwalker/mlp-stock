@@ -286,7 +286,21 @@
         let activeCategory = 'ทั้งหมด';
         let isDataLoaded = false; 
         let selectedLogForReturn = null;
-        let itemRowCounter = 0; // นับเลข row สำหรับ unique id
+        let itemRowCounter = 0;
+
+        // ==========================================
+        // ⏰ ฟังก์ชันจัดการเวลาไทย (กัน UTC ทำงงเมื่อวาน)
+        // ==========================================
+        function getThaiDateString() {
+            // คืนค่ารูปแบบ yyyy-MM-dd ตามเวลาไทย (UTC+7)
+            const now = new Date();
+            // บวก offset เวลาไทย (เครื่องอาจเป็น timezone ไหนก็ได้)
+            const thai = new Date(now.getTime() + (now.getTimezoneOffset() + 420) * 60000);
+            const yyyy = thai.getFullYear();
+            const mm = String(thai.getMonth() + 1).padStart(2, '0');
+            const dd = String(thai.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        } // นับเลข row สำหรับ unique id
 
         // --- ฟังก์ชันอัปเดต UI โปรไฟล์ ---
         function updateProfileUI(user) {
@@ -528,7 +542,7 @@
 
         // --- UI หน้าฟอร์มเบิกของ (รองรับหลายรายการ) ---
         function initWithdrawForm() {
-            document.getElementById('withdrawDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('withdrawDate').value = getThaiDateString();
             if(currentUser && document.getElementById('employeeName').value === "") {
                 document.getElementById('employeeName').value = currentUser.name;
             }
@@ -870,7 +884,7 @@
             const payload = {
                 action: "return",
                 logId: selectedLogForReturn.logId,
-                date: new Date().toISOString().split('T')[0],
+                date: getThaiDateString(),
                 user: currentUser.name,
                 itemId: selectedLogForReturn.itemId,
                 itemName: selectedLogForReturn.itemName,
