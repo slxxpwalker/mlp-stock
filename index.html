@@ -300,6 +300,34 @@
             const mm = String(thai.getMonth() + 1).padStart(2, '0');
             const dd = String(thai.getDate()).padStart(2, '0');
             return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // แปลงวันที่ที่ได้จาก backend ให้เป็นรูปแบบไทย dd/MM/yyyy
+        // รองรับทั้ง yyyy-MM-dd และ ISO string (กรณี backend ส่งดิบๆ มา)
+        function formatDateForDisplay(dateStr) {
+            if (!dateStr) return "-";
+            
+            try {
+                // กรณี ISO format (มี T หรือ Z) → ต้องแปลงเป็นเวลาไทยก่อน
+                if (dateStr.indexOf("T") > 0 || dateStr.indexOf("Z") > 0) {
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return dateStr;
+                    // แปลงเป็นเวลาไทย
+                    const thai = new Date(d.getTime() + (d.getTimezoneOffset() + 420) * 60000);
+                    const dd = String(thai.getDate()).padStart(2, '0');
+                    const mm = String(thai.getMonth() + 1).padStart(2, '0');
+                    const yyyy = thai.getFullYear();
+                    return `${dd}/${mm}/${yyyy}`;
+                }
+                // กรณี yyyy-MM-dd → แปลงเป็น dd/MM/yyyy
+                const parts = dateStr.split("-");
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateStr;
+            } catch(e) {
+                return dateStr;
+            }
         } // นับเลข row สำหรับ unique id
 
         // --- ฟังก์ชันอัปเดต UI โปรไฟล์ ---
@@ -840,7 +868,7 @@
                 const tr = document.createElement("tr");
                 tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-3 md:p-4 text-xs md:text-sm text-slate-500 whitespace-nowrap">${log.date}</td>
+                    <td class="p-3 md:p-4 text-xs md:text-sm text-slate-500 whitespace-nowrap">${formatDateForDisplay(log.date)}</td>
                     <td class="p-3 md:p-4 font-medium">${log.user}</td>
                     <td class="p-3 md:p-4">
                         <p class="font-medium text-slate-800">${log.itemName}</p>
