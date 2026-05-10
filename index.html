@@ -1133,7 +1133,10 @@
                                     <span>${log.location}</span>
                                 </span>
                                 <span>•</span>
-                                <span>${relativeTime(log.date)}</span>
+                                <span class="flex items-center gap-1">
+                                    <span>📅</span>
+                                    <span>${formatDateForDisplay(log.date)}</span>
+                                </span>
                             </div>
                             
                             <!-- บรรทัดสุดท้าย: badge + ปุ่ม -->
@@ -1215,7 +1218,22 @@
                 currentUser = JSON.parse(savedUser);
                 updateProfileUI(currentUser);
                 fetchDataFromSheet();
-                showView('home');
+                
+                // เช็ค URL parameter — ถ้ามาจาก notification ให้เปิดหน้านั้นเลย
+                const params = new URLSearchParams(window.location.search);
+                const targetView = params.get('view');
+                
+                if (targetView === 'history') {
+                    showView('history');
+                } else {
+                    showView('home');
+                }
+                
+                // ลบ parameter ออกจาก URL (ไม่งั้นรีเฟรชครั้งหน้าจะค้าง)
+                if (targetView) {
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, '', cleanUrl);
+                }
             } else {
                 showView('login');
             }
@@ -1255,6 +1273,16 @@
             try {
                 const reg = await navigator.serviceWorker.register('service-worker.js');
                 console.log('✅ Service Worker registered:', reg.scope);
+                
+                // รับ message จาก SW (กรณีกด notification ตอนเว็บเปิดอยู่)
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'navigate') {
+                        if (event.data.view && currentUser) {
+                            showView(event.data.view);
+                        }
+                    }
+                });
+                
                 return reg;
             } catch (e) {
                 console.error('❌ Service Worker registration failed:', e);

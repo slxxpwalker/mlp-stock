@@ -67,19 +67,23 @@ self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked');
   event.notification.close();
   
-  const targetUrl = event.notification.data?.url || '/';
+  // URL ที่จะเปิด (default = หน้าประวัติ)
+  const targetPath = event.notification.data?.url || '?view=history';
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // ถ้ามีเว็บ MLP เปิดอยู่แล้ว → focus ไปที่นั้น
+      // ถ้ามีเว็บ MLP เปิดอยู่แล้ว → focus + navigate ไปหน้าประวัติ
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          // ส่ง message ไปบอก client ให้เปลี่ยนหน้า
+          client.postMessage({ type: 'navigate', view: 'history' });
           return client.focus();
         }
       }
-      // ถ้าไม่มี → เปิดใหม่
+      // ถ้าไม่มี → เปิดใหม่พร้อม query string
       if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+        const fullUrl = self.location.origin + self.registration.scope.replace(self.location.origin, '') + targetPath;
+        return clients.openWindow(fullUrl);
       }
     })
   );
