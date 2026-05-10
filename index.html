@@ -69,6 +69,12 @@
             </div>
             
             <div class="flex items-center gap-3 md:gap-4">
+                <!-- 🔔 ปุ่มกระดิ่งแจ้งเตือน -->
+                <button onclick="showView('notifications')" class="relative bg-blue-600 hover:bg-blue-800 p-2 md:p-2.5 rounded-xl transition-colors shadow-sm" title="แจ้งเตือน">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                    <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center border-2 border-blue-700">0</span>
+                </button>
+
                 <div class="text-right hidden sm:block">
                     <p id="profileName" class="text-sm font-bold text-white tracking-wide">ชื่อผู้ใช้</p>
                     <p id="profileRole" class="text-xs text-blue-200 bg-blue-800/50 inline-block px-2 rounded-full mt-0.5">Role</p>
@@ -256,6 +262,36 @@
                     <div class="text-6xl mb-3">📭</div>
                     <p class="text-slate-500 mb-1 font-medium">ไม่พบรายการ</p>
                     <p class="text-slate-400 text-xs">ลองล้างคำค้นหา</p>
+                </div>
+            </div>
+
+            <!-- 5. VIEW: หน้าแจ้งเตือน -->
+            <div id="view-notifications" class="view-hidden space-y-4 self-start w-full max-w-3xl mx-auto">
+                <div class="flex items-center justify-between px-1 mb-2">
+                    <h2 class="text-base md:text-xl font-semibold text-slate-700 flex items-center">
+                        <span class="text-amber-500 mr-2 text-xl md:text-2xl">🔔</span> การแจ้งเตือน
+                    </h2>
+                    <button onclick="loadNotifications()" class="text-sm bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        รีเฟรช
+                    </button>
+                </div>
+
+                <!-- 📥 รายการแจ้งเตือน -->
+                <div id="notifLoading" class="bg-white rounded-2xl shadow-sm border border-slate-100 text-center py-20 hidden">
+                    <div class="main-loader border-t-amber-500"></div>
+                    <p class="text-slate-500 mt-4">กำลังโหลด...</p>
+                </div>
+
+                <div id="notifList" class="space-y-2 md:space-y-3">
+                    <!-- การ์ดแจ้งเตือนจะถูกใส่ตรงนี้ -->
+                </div>
+
+                <!-- 📭 ว่าง -->
+                <div id="notifEmpty" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center hidden">
+                    <div class="text-6xl mb-3">🔕</div>
+                    <p class="text-slate-500 mb-1 font-medium">ไม่มีการแจ้งเตือน</p>
+                    <p class="text-slate-400 text-xs">เมื่อมีการเบิก/คืนของจะปรากฏที่นี่</p>
                 </div>
             </div>
 
@@ -466,6 +502,7 @@
             document.getElementById('view-withdraw').classList.add('view-hidden');
             document.getElementById('view-stock').classList.add('view-hidden');
             document.getElementById('view-history').classList.add('view-hidden');
+            document.getElementById('view-notifications').classList.add('view-hidden');
 
             const appHeader = document.getElementById('appHeader');
             const headerTitle = document.getElementById('headerTitle');
@@ -504,6 +541,13 @@
                     headerTitle.innerText = "🔄 ประวัติการทำรายการ";
                     headerSubtitle.innerText = currentUser.role === 'Admin' ? "ประวัติของทุกคน" : "ประวัติของฉัน";
                     if(isDataLoaded) renderHistoryList(); else fetchDataFromSheet();
+                }
+                else if (viewName === 'notifications') {
+                    document.getElementById('view-notifications').classList.remove('view-hidden');
+                    headerTitle.innerText = "🔔 การแจ้งเตือน";
+                    headerSubtitle.innerText = "รายการแจ้งเตือนล่าสุด";
+                    loadNotifications();
+                    markAllNotifAsRead();
                 }
             }
         }
@@ -1087,6 +1131,147 @@
         }
 
         // --- เริ่มต้นการทำงาน (ตรวจสอบ Local Storage) ---
+        // ==========================================
+        // 🔔 หน้าแจ้งเตือน + Badge
+        // ==========================================
+        
+        const READ_NOTIF_KEY = 'mlp_read_notifs';  // เก็บ id ของ noti ที่อ่านแล้ว (ใน localStorage)
+        let allNotifications = [];  // cache รายการ noti ล่าสุด
+        
+        function getReadNotifIds() {
+            try {
+                const data = localStorage.getItem(READ_NOTIF_KEY);
+                return data ? new Set(JSON.parse(data)) : new Set();
+            } catch(e) {
+                return new Set();
+            }
+        }
+        
+        function setReadNotifIds(ids) {
+            try {
+                localStorage.setItem(READ_NOTIF_KEY, JSON.stringify([...ids]));
+            } catch(e) {}
+        }
+        
+        async function loadNotifications() {
+            if (!PUSH_SERVER_URL) {
+                const ok = await fetchPushServerUrl();
+                if (!ok) return;
+            }
+            
+            const list = document.getElementById('notifList');
+            const empty = document.getElementById('notifEmpty');
+            const loading = document.getElementById('notifLoading');
+            
+            loading.classList.remove('hidden');
+            list.innerHTML = '';
+            empty.classList.add('hidden');
+            
+            try {
+                const res = await fetch(PUSH_SERVER_URL + '/notifications?limit=100');
+                const data = await res.json();
+                allNotifications = data.notifications || [];
+                renderNotifList();
+            } catch(e) {
+                console.error('Load notifications error:', e);
+                showToast('โหลดแจ้งเตือนไม่ได้', 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+        
+        function renderNotifList() {
+            const list = document.getElementById('notifList');
+            const empty = document.getElementById('notifEmpty');
+            
+            if (allNotifications.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            
+            const readIds = getReadNotifIds();
+            
+            list.innerHTML = allNotifications.map(notif => {
+                const isUnread = !readIds.has(notif.id);
+                const date = new Date(notif.timestamp);
+                const dateStr = date.toLocaleDateString('th-TH', { 
+                    timeZone: 'Asia/Bangkok',
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('th-TH', { 
+                    timeZone: 'Asia/Bangkok',
+                    hour: '2-digit', minute: '2-digit'
+                });
+                
+                // ตัดเอาแค่ title + เนื้อหา
+                const escapedBody = notif.body.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                return `
+                    <div onclick="openNotifAction('${notif.url || ''}')" class="bg-white rounded-xl shadow-sm border border-slate-100 ${isUnread ? 'border-l-4 border-l-amber-400' : ''} p-3 md:p-4 hover:shadow-md transition-all cursor-pointer">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 ${isUnread ? 'bg-amber-100' : 'bg-slate-100'} rounded-full flex items-center justify-center shrink-0 text-lg">
+                                ${isUnread ? '🔔' : '📭'}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <p class="font-semibold text-sm md:text-base ${isUnread ? 'text-slate-800' : 'text-slate-500'}">${notif.title}</p>
+                                    ${isUnread ? '<span class="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-2"></span>' : ''}
+                                </div>
+                                <p class="text-xs md:text-sm text-slate-600 whitespace-pre-line mb-2">${escapedBody}</p>
+                                <p class="text-[11px] text-slate-400">${dateStr} • ${timeStr}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function markAllNotifAsRead() {
+            const readIds = getReadNotifIds();
+            allNotifications.forEach(n => readIds.add(n.id));
+            setReadNotifIds(readIds);
+            updateNotifBadge();
+        }
+        
+        function openNotifAction(url) {
+            // ถ้าเป็น ?view=history → ไปหน้าประวัติ
+            if (url && url.indexOf('view=history') >= 0) {
+                showView('history');
+            }
+        }
+        
+        async function updateNotifBadge() {
+            // คำนวณจำนวน unread
+            if (!PUSH_SERVER_URL) {
+                const ok = await fetchPushServerUrl();
+                if (!ok) return;
+            }
+            
+            try {
+                const res = await fetch(PUSH_SERVER_URL + '/notifications?limit=100');
+                const data = await res.json();
+                const all = data.notifications || [];
+                
+                const readIds = getReadNotifIds();
+                const unreadCount = all.filter(n => !readIds.has(n.id)).length;
+                
+                const badge = document.getElementById('notifBadge');
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch(e) {
+                console.error('Update badge error:', e);
+            }
+        }
+        
+        // อัปเดต badge ทุก 60 วินาที
+        setInterval(updateNotifBadge, 60000);
+
         function initApp() {
             const savedUser = localStorage.getItem('mlp_user');
             if (savedUser) {
@@ -1325,7 +1510,9 @@
             await registerServiceWorker();
             await checkSubscription();
             // ดึง URL Push Server ล่วงหน้าเพื่อให้กดเปิดได้เร็ว
-            fetchPushServerUrl();
+            await fetchPushServerUrl();
+            // อัปเดต badge แจ้งเตือน
+            updateNotifBadge();
         }
         
         // ==========================================
