@@ -32,6 +32,40 @@
         #toast.show { visibility: visible; bottom: 40px; opacity: 1; }
         #toast.success { background-color: #10b981; }
         #toast.error { background-color: #ef4444; }
+        
+        /* ปุ่มฟิลเตอร์ */
+        .filter-btn {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid transparent;
+        }
+        .filter-btn:hover {
+            background-color: #e2e8f0;
+        }
+        .filter-btn.active {
+            background-color: #8b5cf6;
+            color: white;
+            border-color: #7c3aed;
+            box-shadow: 0 1px 3px rgba(139, 92, 246, 0.3);
+        }
+        
+        /* แอนิเมชันการ์ดใหม่ */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .history-card {
+            animation: slideIn 0.2s ease-out;
+        }
+        
+        /* Pulse สำหรับ "ใหม่" */
+        @keyframes softPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .new-badge {
+            animation: softPulse 2s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="bg-slate-200 min-h-screen text-slate-800">
@@ -219,28 +253,61 @@
                     </button>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div id="historyLoading" class="text-center py-20 hidden">
-                        <div class="main-loader border-t-purple-500"></div><p class="text-slate-500 mt-4">กำลังโหลดประวัติ...</p>
+                <!-- 🎛️ ตัวกรอง -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-3 md:p-4 space-y-3">
+                    <!-- กรองช่วงเวลา -->
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 mb-2">⏱️ ช่วงเวลา</p>
+                        <div class="flex gap-2 overflow-x-auto pb-1">
+                            <button onclick="setHistoryFilter('time', 'today')" data-filter="time" data-value="today" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">วันนี้</button>
+                            <button onclick="setHistoryFilter('time', '7days')" data-filter="time" data-value="7days" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">7 วันล่าสุด</button>
+                            <button onclick="setHistoryFilter('time', '30days')" data-filter="time" data-value="30days" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">30 วันล่าสุด</button>
+                            <button onclick="setHistoryFilter('time', 'all')" data-filter="time" data-value="all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">ทั้งหมด</button>
+                        </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
-                                    <th class="p-3 md:p-4 font-medium">วันที่</th>
-                                    <th class="p-3 md:p-4 font-medium">ผู้ทำรายการ</th>
-                                    <th class="p-3 md:p-4 font-medium">รายการสินค้า</th>
-                                    <th class="p-3 md:p-4 font-medium text-center">จำนวน</th>
-                                    <th class="p-3 md:p-4 font-medium">สถานที่/สถานะ</th>
-                                    <th class="p-3 md:p-4 font-medium text-right">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyList" class="text-sm">
-                                <!-- ประวัติจะถูกดึงมาแสดงตรงนี้ -->
-                            </tbody>
-                        </table>
+                    <!-- กรองคน (เห็นเฉพาะ admin) -->
+                    <div id="userFilterWrapper">
+                        <p class="text-xs font-medium text-slate-500 mb-2">👤 ผู้ทำรายการ</p>
+                        <div class="flex gap-2 overflow-x-auto pb-1">
+                            <button onclick="setHistoryFilter('user', 'all')" data-filter="user" data-value="all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">ทุกคน</button>
+                            <button onclick="setHistoryFilter('user', 'me')" data-filter="user" data-value="me" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">เฉพาะของฉัน</button>
+                        </div>
                     </div>
+
+                    <!-- กรองประเภท -->
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 mb-2">📋 ประเภท</p>
+                        <div class="flex gap-2 overflow-x-auto pb-1">
+                            <button onclick="setHistoryFilter('type', 'all')" data-filter="type" data-value="all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">ทั้งหมด</button>
+                            <button onclick="setHistoryFilter('type', 'withdraw')" data-filter="type" data-value="withdraw" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">📦 เบิก</button>
+                            <button onclick="setHistoryFilter('type', 'return')" data-filter="type" data-value="return" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors">🔄 คืน</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🔍 ค้นหา -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-3">
+                    <input id="historySearch" oninput="renderHistoryList()" type="text" placeholder="🔍 ค้นหาชื่อสินค้า / สถานที่ / ผู้เบิก..." class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+
+                <!-- 📊 สรุป -->
+                <div id="historySummary" class="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-2xl p-3 text-xs md:text-sm text-slate-600 hidden"></div>
+
+                <!-- 📋 รายการ -->
+                <div id="historyLoading" class="bg-white rounded-2xl shadow-sm border border-slate-100 text-center py-20 hidden">
+                    <div class="main-loader border-t-purple-500"></div><p class="text-slate-500 mt-4">กำลังโหลดประวัติ...</p>
+                </div>
+
+                <div id="historyList" class="space-y-2 md:space-y-3">
+                    <!-- การ์ดประวัติจะถูกใส่ตรงนี้ -->
+                </div>
+
+                <!-- 📭 ว่าง -->
+                <div id="historyEmpty" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center hidden">
+                    <div class="text-6xl mb-3">📭</div>
+                    <p class="text-slate-500 mb-1 font-medium">ไม่พบรายการ</p>
+                    <p class="text-slate-400 text-xs">ลองเปลี่ยนตัวกรอง หรือล้างคำค้นหา</p>
                 </div>
             </div>
 
@@ -833,54 +900,254 @@
         }
 
         // --- ระบบหน้าประวัติและการคืนของ ---
+        // ==========================================
+        // 📋 หน้าประวัติแบบการ์ด
+        // ==========================================
+        
+        // ตัวกรองปัจจุบัน
+        let historyFilters = {
+            time: 'today',  // today | 7days | 30days | all
+            user: 'all',    // all | me
+            type: 'all'     // all | withdraw | return
+        };
+        
+        function setHistoryFilter(key, value) {
+            historyFilters[key] = value;
+            renderHistoryList();
+        }
+        
+        function updateFilterButtons() {
+            // อัปเดตสถานะปุ่มทุกตัว
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const key = btn.dataset.filter;
+                const value = btn.dataset.value;
+                if (historyFilters[key] === value) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // ถ้าไม่ใช่ admin ซ่อนตัวกรองคน
+            const userFilter = document.getElementById('userFilterWrapper');
+            if (currentUser && currentUser.role !== 'Admin') {
+                userFilter.classList.add('hidden');
+            } else {
+                userFilter.classList.remove('hidden');
+            }
+        }
+        
+        function getDayDiff(dateStr) {
+            // คำนวณว่ารายการห่างจากวันนี้กี่วัน (ใช้เวลาไทย)
+            try {
+                let recordDate;
+                if (dateStr.indexOf("T") > 0 || dateStr.indexOf("Z") > 0) {
+                    recordDate = new Date(dateStr);
+                } else {
+                    const parts = dateStr.split("-");
+                    if (parts.length === 3) {
+                        recordDate = new Date(parts[0], parseInt(parts[1])-1, parts[2]);
+                    } else {
+                        return 9999;
+                    }
+                }
+                
+                const todayStr = getThaiDateString();
+                const todayParts = todayStr.split("-");
+                const today = new Date(todayParts[0], parseInt(todayParts[1])-1, todayParts[2]);
+                
+                const diffMs = today.getTime() - recordDate.getTime();
+                return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            } catch(e) {
+                return 9999;
+            }
+        }
+        
+        function relativeTime(dateStr) {
+            const days = getDayDiff(dateStr);
+            if (days < 0) return formatDateForDisplay(dateStr);  // อนาคต (?)
+            if (days === 0) return "วันนี้";
+            if (days === 1) return "เมื่อวาน";
+            if (days < 7) return `${days} วันที่แล้ว`;
+            if (days < 30) return `${Math.floor(days/7)} สัปดาห์ที่แล้ว`;
+            return formatDateForDisplay(dateStr);
+        }
+        
         function renderHistoryList() {
             const list = document.getElementById("historyList");
-            list.innerHTML = "";
-
-            let filteredLogs = logData;
+            const empty = document.getElementById("historyEmpty");
+            const summary = document.getElementById("historySummary");
+            
+            updateFilterButtons();
+            
+            // เริ่มจากข้อมูลทั้งหมด
+            let filtered = [...logData];
+            
+            // กรองตาม role: ถ้าไม่ใช่ admin บังคับเห็นเฉพาะของตัวเอง
             if (currentUser && currentUser.role !== "Admin") {
-                filteredLogs = logData.filter(log => log.user === currentUser.name);
+                filtered = filtered.filter(log => log.user === currentUser.name);
+            } else if (historyFilters.user === 'me' && currentUser) {
+                filtered = filtered.filter(log => log.user === currentUser.name);
             }
-
-            if (filteredLogs.length === 0) {
-                list.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">ไม่มีประวัติการทำรายการ</td></tr>`;
+            
+            // กรองตามประเภท
+            if (historyFilters.type !== 'all') {
+                filtered = filtered.filter(log => log.type === historyFilters.type);
+            }
+            
+            // กรองตามเวลา
+            if (historyFilters.time !== 'all') {
+                const limits = { today: 0, '7days': 7, '30days': 30 };
+                const maxDays = limits[historyFilters.time];
+                filtered = filtered.filter(log => {
+                    const diff = getDayDiff(log.date);
+                    return diff >= 0 && diff <= maxDays;
+                });
+            }
+            
+            // ค้นหา
+            const searchInput = document.getElementById("historySearch");
+            const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
+            if (search) {
+                filtered = filtered.filter(log => 
+                    log.itemName.toLowerCase().includes(search) ||
+                    log.location.toLowerCase().includes(search) ||
+                    log.user.toLowerCase().includes(search) ||
+                    log.itemId.toLowerCase().includes(search)
+                );
+            }
+            
+            // เรียงล่าสุดก่อน
+            const sorted = [...filtered].reverse();
+            
+            // แสดงสรุป
+            if (sorted.length > 0) {
+                const withdrawCount = sorted.filter(l => l.type === 'withdraw').length;
+                const returnCount = sorted.filter(l => l.type === 'return').length;
+                summary.innerHTML = `📊 พบ <strong>${sorted.length}</strong> รายการ ` +
+                    (withdrawCount > 0 ? `· 📦 เบิก ${withdrawCount}` : '') +
+                    (returnCount > 0 ? ` · 🔄 คืน ${returnCount}` : '');
+                summary.classList.remove('hidden');
+            } else {
+                summary.classList.add('hidden');
+            }
+            
+            // ถ้าไม่มีรายการ
+            if (sorted.length === 0) {
+                list.innerHTML = "";
+                empty.classList.remove('hidden');
                 return;
             }
-
-            const sortedLogs = [...filteredLogs].reverse();
-
-            sortedLogs.forEach((log) => {
-                const isReturn = log.type === "return";
-                const typeBadge = isReturn 
-                    ? `<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs ml-1 border border-purple-200">คืนของ</span>`
-                    : `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs ml-1">เบิกใช้งาน</span>`;
+            empty.classList.add('hidden');
+            
+            // จัดกลุ่มตามวัน
+            const grouped = {};
+            sorted.forEach(log => {
+                const days = getDayDiff(log.date);
+                let groupKey;
+                if (days === 0) groupKey = "📅 วันนี้";
+                else if (days === 1) groupKey = "📅 เมื่อวาน";
+                else if (days < 7) groupKey = "📅 7 วันที่ผ่านมา";
+                else if (days < 30) groupKey = "📅 1 เดือนที่ผ่านมา";
+                else groupKey = "📅 เก่ากว่านั้น";
                 
-                const qtyText = isReturn ? `+${log.qty}` : `-${log.qty}`;
-                const qtyClass = isReturn ? `text-purple-600` : `text-red-500`;
-
-                const canReturn = !isReturn && log.qty > 0 && (currentUser.role === 'Admin' || log.user === currentUser.name);
-                const actionBtn = canReturn 
-                    ? `<button onclick="openReturnModal('${log.logId}')" class="text-xs bg-white border border-slate-300 hover:border-purple-500 hover:text-purple-600 text-slate-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">คืนของ</button>`
-                    : `-`;
-
-                const tr = document.createElement("tr");
-                tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-3 md:p-4 text-xs md:text-sm text-slate-500 whitespace-nowrap">${log.date}</td>
-                    <td class="p-3 md:p-4 font-medium">${log.user}</td>
-                    <td class="p-3 md:p-4">
-                        <p class="font-medium text-slate-800">${log.itemName}</p>
-                        <p class="text-xs text-slate-400">${log.itemId}</p>
-                    </td>
-                    <td class="p-3 md:p-4 text-center font-bold text-base ${qtyClass}">${qtyText}</td>
-                    <td class="p-3 md:p-4">
-                        <p class="text-slate-700">${log.location}</p>
-                        ${typeBadge}
-                    </td>
-                    <td class="p-3 md:p-4 text-right">${actionBtn}</td>
-                `;
-                list.appendChild(tr);
+                if (!grouped[groupKey]) grouped[groupKey] = [];
+                grouped[groupKey].push(log);
             });
+            
+            // วาด HTML
+            let html = "";
+            Object.keys(grouped).forEach(groupKey => {
+                html += `<div class="text-xs font-semibold text-slate-500 px-2 pt-2 pb-1">${groupKey} <span class="text-slate-400 font-normal">(${grouped[groupKey].length})</span></div>`;
+                
+                grouped[groupKey].forEach(log => {
+                    html += renderHistoryCard(log);
+                });
+            });
+            
+            list.innerHTML = html;
+        }
+        
+        function renderHistoryCard(log) {
+            const isReturn = log.type === "return";
+            const isToday = getDayDiff(log.date) === 0;
+            
+            // สี & ไอคอน ตามประเภท
+            const config = isReturn ? {
+                icon: "🔄",
+                iconBg: "bg-purple-100",
+                accent: "border-l-purple-400",
+                qtyText: `+${log.qty}`,
+                qtyClass: "text-purple-600 bg-purple-50",
+                badge: '<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] border border-purple-200 font-medium">คืน</span>'
+            } : {
+                icon: "📦",
+                iconBg: "bg-blue-100",
+                accent: "border-l-blue-400",
+                qtyText: `-${log.qty}`,
+                qtyClass: "text-red-500 bg-red-50",
+                badge: '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-medium">เบิก</span>'
+            };
+            
+            // ปุ่มคืน
+            const canReturn = !isReturn && log.qty > 0 && (currentUser.role === 'Admin' || log.user === currentUser.name);
+            const actionBtn = canReturn 
+                ? `<button onclick="openReturnModal('${log.logId}')" class="text-xs bg-white border border-slate-200 hover:border-purple-500 hover:text-purple-600 text-slate-600 px-3 py-1 rounded-lg transition-colors shadow-sm whitespace-nowrap">↩️ คืนของ</button>`
+                : '';
+            
+            // Badge ใหม่
+            const newBadge = isToday 
+                ? '<span class="new-badge bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-amber-200">NEW</span>'
+                : '';
+            
+            return `
+                <div class="history-card bg-white rounded-xl shadow-sm border border-slate-100 border-l-4 ${config.accent} p-3 md:p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start gap-3">
+                        <!-- ไอคอนซ้าย -->
+                        <div class="w-10 h-10 md:w-11 md:h-11 ${config.iconBg} rounded-full flex items-center justify-center shrink-0 text-lg md:text-xl">
+                            ${config.icon}
+                        </div>
+                        
+                        <!-- เนื้อหา -->
+                        <div class="flex-1 min-w-0">
+                            <!-- บรรทัดบน: ชื่อสินค้า + จำนวน -->
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-slate-800 text-sm md:text-base truncate">${log.itemName}</p>
+                                    <p class="text-[11px] text-slate-400">${log.itemId}</p>
+                                </div>
+                                <div class="${config.qtyClass} px-2.5 py-1 rounded-lg font-bold text-sm md:text-base shrink-0">
+                                    ${config.qtyText}
+                                </div>
+                            </div>
+                            
+                            <!-- บรรทัดล่าง: ข้อมูลเสริม -->
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 mb-2">
+                                <span class="flex items-center gap-1">
+                                    <span>👤</span>
+                                    <span class="font-medium text-slate-700">${log.user}</span>
+                                </span>
+                                <span>•</span>
+                                <span class="flex items-center gap-1">
+                                    <span>📍</span>
+                                    <span>${log.location}</span>
+                                </span>
+                                <span>•</span>
+                                <span>${relativeTime(log.date)}</span>
+                            </div>
+                            
+                            <!-- บรรทัดสุดท้าย: badge + ปุ่ม -->
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    ${config.badge}
+                                    ${newBadge}
+                                </div>
+                                ${actionBtn}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function openReturnModal(logId) {
